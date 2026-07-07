@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en" class="gated">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Medical Minute — Research Based Essays</title>
+<meta name="description" content="The Medical Minute — a catalog of research-based essays exploring the human body, medicine, and the science of health." />
+<link rel="icon" href="assets/medical-heart.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* palette pulled from the navy heart logo */
+    --cream:      #f3eede;
+    --cream-soft: #f7f3e8;
+    --cream-deep: #eae2cc;
+    --paper:      #fbf9f1;
+    --navy:       #163a66;
+    --navy-deep:  #0f2b4d;
+    --navy-soft:  #2a5487;
+    --teal:       #4d9aa6;
+    --teal-deep:  #3a7d88;
+    --ink:        #16283f;
+    --muted:      #5c6b7a;
+    --line:       rgba(22,58,102,0.14);
+
+    --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --sans:  "Jost", "Segoe UI", system-ui, sans-serif;
+    --ease:  cubic-bezier(0.22, 0.75, 0.28, 1);
+    --shadow: 0 24px 60px -28px rgba(15,43,77,0.45);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--cream);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: rgba(77,154,166,0.25); }
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 6px; }
+
+  /* Welcome gate — scrolling stays locked on the hero until "Browse the Catalog" is clicked.
+     Lock on <html> only, so the body never becomes its own scroll container. */
+  html.gated { overflow: hidden; }
+
+  /* Transition portal — the heart zooms up and you pass through the white cross into the catalog */
+  .portal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; overflow: hidden;
+    background: var(--cream); opacity: 0; visibility: hidden; pointer-events: none; }
+  .portal.run { visibility: visible; pointer-events: auto; }
+  .portal__heart { width: min(46vmin, 360px); height: auto; transform-origin: 50% 51%; will-change: transform;
+    filter: drop-shadow(0 24px 60px rgba(11, 26, 45, 0.35)); }
+  /* arriving from another page: page starts under a plain white cover that fades away */
+  html.arriving .portal { visibility: visible; opacity: 1; background: #ffffff; }
+  html.arriving .portal__heart { opacity: 0; }
+
+  /* Back-to-home button — only visible in the catalog view */
+  .back-home { position: fixed; top: 20px; left: 5vw; z-index: 45; display: none; align-items: center; gap: 8px;
+    font-family: var(--sans); font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.72rem;
+    text-decoration: none; color: var(--paper); background: var(--navy); border: 1.5px solid var(--navy); cursor: pointer;
+    padding: 11px 20px; border-radius: 100px; box-shadow: 0 12px 30px -14px rgba(15,43,77,0.6); }
+  .back-home svg { width: 14px; height: 14px; }
+  html.catalog-view .back-home { display: inline-flex; }
+
+  /* Persistent top-right nav — Join the Club + Socials, always present */
+  .topnav { position: fixed; top: 16px; right: 5vw; z-index: 46; display: flex; gap: 10px; }
+  .dd { position: relative; }
+  .topnav__btn { font-family: var(--sans); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.66rem;
+    color: var(--paper); background: var(--navy); border: 1.5px solid var(--navy); padding: 10px 16px; border-radius: 100px; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 10px 26px -14px rgba(15,43,77,0.55); }
+  .topnav__btn--ghost { background: rgba(251,249,241,0.72); color: var(--navy); backdrop-filter: blur(4px); }
+  .topnav__btn .caret { font-size: 0.72em; transition: transform 0.3s var(--ease); }
+  .dd.open .topnav__btn .caret { transform: rotate(180deg); }
+  .dd__menu { position: absolute; top: calc(100% + 8px); right: 0; min-width: 176px; display: flex; flex-direction: column; gap: 2px;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 8px; box-shadow: 0 24px 54px -20px rgba(15,43,77,0.5);
+    opacity: 0; transform: translateY(-8px) scale(0.98); transform-origin: top right; pointer-events: none;
+    transition: opacity 0.25s var(--ease), transform 0.25s var(--ease); }
+  .dd.open .dd__menu { opacity: 1; transform: none; pointer-events: auto; }
+  .dd__menu a { font-family: var(--sans); font-weight: 500; font-size: 0.78rem; letter-spacing: 0.04em; color: var(--navy);
+    text-decoration: none; padding: 10px 14px; border-radius: 9px; white-space: nowrap; transition: background 0.2s, color 0.2s; }
+  .dd__menu a:hover { background: var(--navy); color: var(--paper); }
+  @media (max-width: 560px) { .topnav { right: 4vw; gap: 8px; } .topnav__btn { padding: 8px 12px; font-size: 0.6rem; letter-spacing: 0.08em; } }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 96px 6vw 120px;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--cream);
+  }
+  /* the blurred logo background */
+  .hero__bg {
+    position: absolute; inset: -6%;
+    z-index: -3;
+    background: url("assets/medical-heart.svg") center/cover no-repeat;
+    filter: blur(9px) saturate(1.02);
+    transform: scale(1.08);
+    animation: driftBg 30s ease-in-out infinite alternate;
+  }
+  @keyframes driftBg {
+    0%   { transform: scale(1.08) translate(0,0); }
+    100% { transform: scale(1.14) translate(-1.4%, -1.2%); }
+  }
+  /* a soft cream frost so the essays’ title reads clearly over the heart */
+  .hero__veil {
+    position: absolute; inset: 0; z-index: -2; pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 50% 42%, rgba(243,238,222,0.20) 0%, rgba(243,238,222,0.52) 46%, rgba(243,238,222,0.86) 100%),
+      linear-gradient(180deg, rgba(243,238,222,0.30) 0%, rgba(243,238,222,0.10) 40%, rgba(243,238,222,0.70) 100%);
+  }
+  .hero__grain {
+    position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.05; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  .hero__card {
+    position: relative;
+    max-width: 760px;
+    padding: clamp(34px, 5vw, 60px) clamp(26px, 6vw, 74px);
+    background: rgba(251,249,241,0.46);
+    border: 1px solid rgba(251,249,241,0.7);
+    border-radius: 28px;
+    backdrop-filter: blur(6px) saturate(1.05);
+    -webkit-backdrop-filter: blur(6px) saturate(1.05);
+    box-shadow: 0 40px 90px -46px rgba(15,43,77,0.55);
+  }
+
+  .emblem { width: clamp(58px, 9vw, 84px); margin: 0 auto clamp(14px, 2vw, 22px); filter: drop-shadow(0 10px 20px rgba(15,43,77,0.25)); }
+  .emblem svg { width: 100%; height: auto; display: block; }
+
+  .hero__eyebrow {
+    font-family: var(--sans); font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.42em; font-size: clamp(0.6rem, 1.5vw, 0.76rem);
+    color: var(--teal-deep); padding-left: 0.42em; margin-bottom: clamp(12px, 2vw, 18px);
+  }
+  .hero__title {
+    font-family: var(--serif); font-weight: 600; line-height: 0.95;
+    font-size: clamp(2.9rem, 10vw, 5.8rem); color: var(--navy);
+    letter-spacing: -0.01em;
+  }
+  .hero__title em { font-style: italic; font-weight: 500; color: var(--navy-soft); }
+  .rule { display: flex; align-items: center; justify-content: center; gap: 14px; margin: clamp(16px, 2.5vw, 26px) auto clamp(14px, 2vw, 20px); }
+  .rule::before, .rule::after { content: ""; height: 1px; width: clamp(30px, 8vw, 74px); background: linear-gradient(90deg, transparent, var(--navy-soft)); }
+  .rule::after { background: linear-gradient(90deg, var(--navy-soft), transparent); }
+  .rule svg { width: 20px; height: 20px; color: var(--teal); }
+  .hero__sub {
+    font-family: var(--sans); font-weight: 400; text-transform: uppercase;
+    letter-spacing: 0.34em; font-size: clamp(0.72rem, 2vw, 1rem);
+    color: var(--ink); padding-left: 0.34em;
+  }
+  .hero__lede {
+    font-family: var(--serif); font-style: italic; font-size: clamp(1.05rem, 2.4vw, 1.4rem);
+    color: var(--muted); margin-top: clamp(18px, 2.6vw, 26px); line-height: 1.5; max-width: 46ch; margin-inline: auto;
+  }
+  .hero__ctas { display: inline-flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: clamp(26px, 3.4vw, 36px); }
+  .hero__cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--sans); font-weight: 500; text-transform: uppercase; letter-spacing: 0.2em;
+    font-size: 0.76rem; color: var(--paper); text-decoration: none;
+    background: var(--navy); padding: 15px 34px; border-radius: 100px; border: 1.5px solid var(--navy);
+    box-shadow: 0 18px 40px -16px rgba(15,43,77,0.7);
+  }
+  .hero__cta--ghost { background: transparent; color: var(--navy); border-color: var(--navy); box-shadow: none; }
+  .hero__cta svg { width: 15px; height: 15px; transition: transform 0.35s var(--ease); }
+  .hero__cta:hover svg { transform: translateY(3px); }
+
+  /* Shared button reaction: heartbeat + fade into white on hover */
+  @keyframes btnbeat { 0%,100% { transform: scale(1); } 18% { transform: scale(1.07); } 32% { transform: scale(1); } 48% { transform: scale(1.045); } 62% { transform: scale(1); } }
+  .beatbtn { transition: background 0.4s var(--ease), color 0.4s var(--ease), border-color 0.4s var(--ease), box-shadow 0.4s var(--ease); }
+  .beatbtn:hover { background: #ffffff; color: var(--navy); border-color: #ffffff;
+    box-shadow: 0 18px 44px -14px rgba(15,43,77,0.5); animation: btnbeat 1s ease-in-out infinite; }
+
+  /* ============ CATALOG ============ */
+  .catalog { position: relative; background: var(--cream); padding: clamp(56px, 8vw, 96px) 6vw clamp(70px, 9vw, 120px); }
+  .catalog__head { max-width: 1180px; margin: 0 auto clamp(30px, 4vw, 48px); display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .catalog__headings { flex: 1 1 320px; }
+  .addbtn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.74rem; text-decoration: none; color: var(--paper);
+    background: var(--navy); border: 1.5px solid var(--navy); padding: 13px 24px; border-radius: 100px; white-space: nowrap;
+    box-shadow: 0 12px 30px -14px rgba(15,43,77,0.6); }
+  .addbtn svg { width: 15px; height: 15px; }
+  .catalog__kicker {
+    font-family: var(--sans); font-weight: 500; text-transform: uppercase; letter-spacing: 0.34em;
+    font-size: 0.72rem; color: var(--teal-deep); margin-bottom: 12px;
+  }
+  .catalog__title { font-family: var(--serif); font-weight: 600; font-size: clamp(2rem, 5vw, 3.1rem); color: var(--navy); line-height: 1.02; }
+  .catalog__note { font-family: var(--serif); font-style: italic; color: var(--muted); font-size: clamp(1rem, 2.2vw, 1.2rem); margin-top: 10px; }
+
+  /* controls */
+  .controls { max-width: 1180px; margin: 0 auto clamp(26px, 3.4vw, 40px); display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: center; justify-content: space-between; }
+  .search {
+    position: relative; flex: 1 1 280px; max-width: 420px;
+  }
+  .search input {
+    width: 100%; font-family: var(--sans); font-size: 0.95rem; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--line); border-radius: 100px;
+    padding: 13px 18px 13px 44px; transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .search input::placeholder { color: #97a2ad; }
+  .search input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(77,154,166,0.16); }
+  .search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--navy-soft); pointer-events: none; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: var(--sans); font-weight: 500; font-size: 0.74rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--navy); cursor: pointer;
+    background: transparent; border: 1px solid var(--line); border-radius: 100px;
+    padding: 9px 16px; transition: all 0.22s var(--ease);
+  }
+  .chip:hover { border-color: var(--navy-soft); color: var(--navy-deep); }
+  .chip.active { background: var(--navy); color: var(--paper); border-color: var(--navy); }
+
+  /* grid */
+  .grid { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: clamp(18px, 2.2vw, 26px); perspective: 1300px; }
+  .card {
+    position: relative; display: flex; flex-direction: column; text-align: left;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 20px;
+    padding: 26px 26px 22px; cursor: pointer; overflow: hidden;
+    transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease), border-color 0.4s;
+    opacity: 0;               /* hidden until scrolled into view */
+  }
+  .card.reveal { animation: cardReveal 0.85s var(--ease) forwards; }
+  .card.shown  { opacity: 1; }   /* stable state — leaves transform free for :hover */
+  .card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--teal); transform: scaleY(0); transform-origin: top; transition: transform 0.4s var(--ease);
+  }
+  .card:hover { transform: translateY(-6px); box-shadow: var(--shadow); border-color: transparent; }
+  .card:hover::before { transform: scaleY(1); }
+  @keyframes cardReveal {
+    0%   { opacity: 0; transform: translateY(58px) scale(0.93) rotateX(9deg); filter: blur(7px); }
+    55%  { filter: blur(0); }
+    100% { opacity: 1; transform: none; filter: blur(0); }
+  }
+  /* generic scroll-reveal for the section header + controls */
+  .will-reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
+  .will-reveal.in { opacity: 1; transform: none; }
+
+  .card__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .card__cat {
+    font-family: var(--sans); font-weight: 600; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--teal-deep); background: rgba(77,154,166,0.12); padding: 6px 12px; border-radius: 100px; white-space: nowrap;
+  }
+  .card__min { font-family: var(--sans); font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+  .card__title { font-family: var(--serif); font-weight: 600; font-size: 1.5rem; line-height: 1.12; color: var(--navy); margin-bottom: 10px; }
+  .card__abstract { font-family: var(--sans); font-weight: 300; font-size: 0.92rem; line-height: 1.6; color: var(--muted); flex: 1; }
+  .card__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .card__author { display: flex; align-items: center; gap: 9px; font-family: var(--sans); font-size: 0.82rem; color: var(--ink); }
+  .card__avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: var(--paper); display: grid; place-items: center; font-weight: 600; font-size: 0.72rem; letter-spacing: 0.02em; }
+  .card__read { font-family: var(--sans); font-weight: 500; font-size: 0.78rem; letter-spacing: 0.06em; color: var(--navy); display: inline-flex; align-items: center; gap: 6px; }
+  .card__read svg { width: 14px; height: 14px; transition: transform 0.3s var(--ease); }
+  .card:hover .card__read svg { transform: translateX(4px); }
+
+  .empty { max-width: 1180px; margin: 0 auto; text-align: center; padding: 60px 20px; color: var(--muted); font-family: var(--serif); font-style: italic; font-size: 1.3rem; display: none; }
+
+  /* ============ MODAL READER (fullscreen) ============ */
+  .modal { position: fixed; inset: 0; z-index: 100; display: none; perspective: 1700px; }
+  .modal.open { display: block; }
+  .modal__scrim { position: absolute; inset: 0; background: rgba(11,26,45,0.5); backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.45s var(--ease); }
+  .modal.open .modal__scrim { opacity: 1; }
+  .modal__panel {
+    position: absolute; inset: 0; width: 100%; height: 100%; overflow-y: auto;
+    background: var(--paper); box-shadow: 0 50px 120px -40px rgba(11,26,45,0.7);
+    opacity: 0; will-change: transform, opacity; transform-origin: center center; backface-visibility: hidden;
+  }
+  .modal.open .modal__panel { opacity: 1; }   /* JS drives flip → expand → collapse via the Web Animations API */
+  .modal__inner { max-width: 760px; margin: 0 auto; padding: clamp(66px, 11vh, 132px) clamp(24px, 6vw, 40px) 120px; }
+  /* Text starts hidden + lifted; the .reveal class (added by JS once the panel finishes
+     expanding) fades each part down into place. Removing .reveal reverses it. */
+  .modal__inner > * { opacity: 0; transform: translateY(-30px) scale(1.05);
+    transition: opacity 0.55s var(--ease), transform 0.55s var(--ease); }
+  .modal.reveal .modal__inner > * { opacity: 1; transform: none; }
+  .modal__inner > *:nth-child(1) { transition-delay: 0s; }
+  .modal__inner > *:nth-child(2) { transition-delay: 0.07s; }
+  .modal__inner > *:nth-child(3) { transition-delay: 0.14s; }
+  .modal__inner > *:nth-child(4) { transition-delay: 0.21s; }
+  .modal__inner > *:nth-child(5) { transition-delay: 0.28s; }
+  .modal__inner > *:nth-child(6) { transition-delay: 0.35s; }
+  .modal__close { position: fixed; top: 22px; right: 22px; z-index: 3; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--cream-soft); cursor: pointer; display: grid; place-items: center; color: var(--navy); opacity: 0; transition: opacity 0.4s var(--ease), background 0.25s, transform 0.25s; box-shadow: 0 6px 20px -8px rgba(11,26,45,0.4); }
+  .modal.reveal .modal__close { opacity: 1; }
+  .modal__close:hover { background: var(--navy); color: var(--paper); transform: rotate(90deg); }
+  .modal__cat { font-family: var(--sans); font-weight: 600; font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--teal-deep); }
+  .modal__title { font-family: var(--serif); font-weight: 700; font-size: clamp(1.8rem, 4.5vw, 2.6rem); line-height: 1.06; color: var(--navy); margin: 12px 0 16px; }
+  .modal__meta { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-family: var(--sans); font-size: 0.85rem; color: var(--muted); padding-bottom: 22px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+  .modal__meta strong { color: var(--ink); font-weight: 500; }
+  .modal__body { font-family: var(--serif); font-size: 1.16rem; line-height: 1.7; color: #33414f; }
+  .modal__body p { margin-bottom: 1.1em; }
+  .modal__body p:first-child::first-letter { font-size: 3.1em; float: left; line-height: 0.8; padding: 6px 12px 0 0; color: var(--navy); font-weight: 600; }
+  .essay-h { font-family: var(--serif); font-weight: 600; font-size: 1.5rem; line-height: 1.15; color: var(--navy); margin: 1.6em 0 0.6em; }
+  .modal__refs { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .modal__refs .essay-h { margin-top: 0; }
+  .reflist { list-style: decimal; padding-left: 1.4em; }
+  .reflist li { font-family: var(--sans); font-weight: 300; font-size: 0.86rem; line-height: 1.55; color: var(--muted); margin-bottom: 0.85em; word-break: break-word; }
+  .reflist a { color: var(--teal-deep); text-decoration: none; border-bottom: 1px solid rgba(58,125,136,0.35); }
+  .reflist a:hover { color: var(--navy); border-bottom-color: var(--navy); }
+  .modal__link { display: inline-flex; align-items: center; gap: 9px; margin-top: 14px; font-family: var(--sans); font-weight: 500; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper); background: var(--navy); padding: 13px 26px; border-radius: 100px; text-decoration: none; transition: background 0.3s, transform 0.3s; }
+  .modal__link:hover { background: var(--navy-deep); transform: translateY(-2px); }
+
+  /* ============ FOOTER ============ */
+  .footer { background: var(--navy); color: rgba(251,249,241,0.85); text-align: center; padding: clamp(46px, 6vw, 72px) 6vw; }
+  .footer__mark { font-family: var(--serif); font-weight: 600; font-size: clamp(1.5rem, 4vw, 2.1rem); color: var(--paper); margin-bottom: 8px; }
+  .footer__tag { font-family: var(--sans); text-transform: uppercase; letter-spacing: 0.3em; font-size: 0.68rem; color: rgba(251,249,241,0.6); }
+  .footer__links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 26px 0 20px; }
+  .footer__links a { font-family: var(--sans); font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: rgba(251,249,241,0.82); transition: color 0.25s; }
+  .footer__links a:hover { color: var(--teal); }
+  .footer__fine { font-family: var(--sans); font-size: 0.72rem; color: rgba(251,249,241,0.45); }
+
+  @media (max-width: 640px) {
+    .catalog { padding-top: 84px; }   /* clear the fixed Back + top-nav */
+    .controls { flex-direction: column; align-items: stretch; }
+    .search { max-width: none; flex: 0 0 auto; }
+    .chips { justify-content: flex-start; }
+    .card__abstract { -webkit-line-clamp: 4; }
+    .addbtn { align-self: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+<script>
+  /* Arrived here via a heart-dive from another page? Start under a white cover and fade it away. */
+  if (sessionStorage.getItem('mm_heart')) { sessionStorage.removeItem('mm_heart'); document.documentElement.classList.add('arriving'); }
+  /* Always begin at the welcome gate — don't let the browser restore a prior scroll position. */
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.addEventListener('load', function () {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  });
+</script>
+</head>
+<body>
+  <!-- If JS is disabled, don't trap the visitor on the hero -->
+  <noscript><style>html.gated { overflow: auto !important; }</style></noscript>
+
+  <!-- Transition portal — dive through the heart into the catalog -->
+  <div class="portal" id="portal" aria-hidden="true">
+    <svg class="portal__heart" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M60 104 C 60 104 16 76 16 47 C 16 32 27 23 38 23 C 48 23 55 30 60 37 C 65 30 72 23 82 23 C 93 23 104 32 104 47 C 104 76 60 104 60 104 Z" fill="#163a66"/>
+      <g fill="#fbf9f1"><rect x="53" y="44" width="14" height="38" rx="2"/><rect x="43" y="54" width="34" height="14" rx="2"/></g>
+    </svg>
+  </div>
+
+  <!-- Persistent top-right nav (always visible) -->
+  <nav class="topnav">
+    <a class="topnav__btn beatbtn" href="join.html" data-heart>Join the Club</a>
+    <a class="topnav__btn topnav__btn--ghost beatbtn" href="socials.html" data-heart>Socials</a>
+  </nav>
+
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__veil"></div>
+    <div class="hero__grain"></div>
+
+    <div class="hero__card">
+      <div class="emblem" aria-hidden="true">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <path d="M60 104 C 60 104 16 76 16 47 C 16 32 27 23 38 23 C 48 23 55 30 60 37 C 65 30 72 23 82 23 C 93 23 104 32 104 47 C 104 76 60 104 60 104 Z" fill="#163a66"/>
+          <g fill="#fbf9f1"><rect x="53" y="44" width="14" height="38" rx="2"/><rect x="43" y="54" width="34" height="14" rx="2"/></g>
+        </svg>
+      </div>
+      <p class="hero__eyebrow">The Medical Minute</p>
+      <h1 class="hero__title">The&nbsp;<em>Medical</em><br>Minute</h1>
+      <div class="rule" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <p class="hero__sub">Research Based Essays</p>
+      <p class="hero__lede">A living catalog of student research — one part of the human body, one question, one carefully argued essay at a time.</p>
+      <div class="hero__ctas">
+        <a class="hero__cta beatbtn" href="#catalog">Browse the Catalog
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        </a>
+        <a class="hero__cta hero__cta--ghost beatbtn" href="officers.html" data-heart>Who We Are</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Back to the welcome (visible only in the catalog view) -->
+  <button class="back-home beatbtn" type="button" aria-label="Back to home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back
+  </button>
+
+  <!-- ================= CATALOG ================= -->
+  <main class="catalog" id="catalog">
+    <div class="catalog__head will-reveal">
+      <div class="catalog__headings">
+        <p class="catalog__kicker">The Collection</p>
+        <h2 class="catalog__title">Research Based Essays</h2>
+        <p class="catalog__note">Peer-reviewed, evidence-driven, and written by the students of The Medical Minute.</p>
+      </div>
+      <a class="addbtn beatbtn" href="https://drive.google.com/drive/folders/1k-13q5RKPiQevu-PE4l_5nr5zbpBu-bD?usp=sharing" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add Your Own
+      </a>
+    </div>
+
+    <div class="controls will-reveal">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" id="search" placeholder="Search essays, topics, authors…" aria-label="Search essays" />
+      </label>
+      <div class="chips" id="chips" role="tablist" aria-label="Filter by category"></div>
+    </div>
+
+    <section class="grid" id="grid" aria-live="polite"></section>
+    <p class="empty" id="empty">No essays match that search — try another topic.</p>
+  </main>
+
+  <!-- ================= MODAL ================= -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="modal__scrim" data-close></div>
+    <article class="modal__panel">
+      <button class="modal__close" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="modal__inner">
+        <p class="modal__cat" id="m-cat"></p>
+        <h3 class="modal__title" id="m-title"></h3>
+        <div class="modal__meta" id="m-meta"></div>
+        <div class="modal__body" id="m-body"></div>
+        <div class="modal__refs" id="m-refs"></div>
+        <a class="modal__link" id="m-link" href="#" target="_blank" rel="noopener">Read the full essay
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </a>
+      </div>
+    </article>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <p class="footer__mark">The Medical Minute</p>
+    <p class="footer__tag">Research Based Essays</p>
+    <nav class="footer__links">
+      <a href="#catalog">Catalog</a>
+      <a href="https://www.instagram.com/themedicalminute/" target="_blank" rel="noopener">Instagram</a>
+      <a href="mailto:themedicalminute17@gmail.com">Submit an Essay</a>
+    </nav>
+    <p class="footer__fine">© <span id="year"></span> The Medical Minute · A student research collective</p>
+  </footer>
+
+  <script>
+    /* ---------- Essay catalog data ----------
+       Add a new essay by dropping an object into this array. Fields:
+         cat, title, author, date, abstract  — card + header
+         body   — the essay; separate paragraphs with \n\n, and start a
+                  sub-heading line with "## " (e.g. "## Conclusion")
+         refs   — array of reference strings (URLs auto-link)
+         link   — optional external URL; leave "" to hide the button */
+    const ESSAYS = [
+      {
+        cat: "Nutrition",
+        title: "Myth-Busting Juice Detox Cleanses: Why Your Body Does Not Need Them to Get Rid of Toxins",
+        author: "Sai Pulletikurthi",
+        date: "June 27, 2026",
+        abstract: "Juice cleanses promise to flush out toxins — but the liver and kidneys already do that every day. A look at why detox diets are mostly myth, and sometimes harmful.",
+        body: `Juice cleanses and detox diets have become very popular today since they are believed to get rid of toxins from your body and make you healthier, as well as lose weight. Many people think that after eating unhealthy foods or experiencing bloating and having an urge to "reset" something in their bodies, they need to undergo a detox process, which consists of drinking juices, taking teas, fasts, and special supplements. But this belief is mostly a myth, as the human body already has its natural cleansing system consisting of the liver, kidneys, digestive system, lungs, and skin. Healthy eating helps this system work properly, while special cleansing products are generally unnecessary and have no solid scientific proof.
+
+The liver is among the organs responsible for eliminating harmful substances from the body. This organ takes care of processing nutrients, breaking down harmful chemicals, and helping to dispose of waste products through blood flow. Kidneys filter the blood and eliminate the waste through the process of urination. Due to this, the body is constantly "detoxing" itself without requiring any special beverages or cleanses. As Mayo Clinic Health System explains, there is no scientific evidence that proves detox diets also known as juice cleanses work as promised and says that the body needs the fiber for digestion which juice cleanses remove. Thus, instead of purchasing any detox products, or buying into the juice cleansing diets, people should drink water, eat healthy food, and avoid highly processed products (Zeratsky, 2023).
+
+Moreover, detoxification diets have little scientific evidence supporting their benefits. According to the National Center for Complementary and Integrative Health, detoxification and cleansing procedures may consist of fasting, drinking only juices, taking supplements, herbs, laxatives, and colonic cleansing. Though there were some small scale studies proving short-term effects, including weight loss, such studies had poor quality, had few participants, and contained certain design flaws. In one of the reviews conducted in 2015, there was no scientific evidence that proved the effectiveness of detox diets in weight management and eliminating toxins from the body. Another review claimed that juice cleanses may cause short-term weight loss because they drastically reduce calorie intake; however, people tend to regain weight after coming back to their usual eating habits (National Center for Complementary and Integrative Health, 2019).
+
+Another reason why people believe in the effectiveness of detox diets is that they start losing weight or feel light after undergoing such procedures. However, this does not mean that they got rid of any toxins. Drinking juice for several days results in decreasing the number of calories, proteins, fiber, and sodium in your body. This leads to temporary loss of water weight or lack of food in your digestive system. This makes people believe that they are detoxing, but the effect is usually short term. Harvard Health states that there is very little scientific evidence that proves the effectiveness of detox or cleanse diets in improving people's health. Some positive effects observed in cleanse diet studies may be caused by caloric restriction rather than detox effect (Salamon, 2023).
+
+Some detox products may also be dangerous for people's health. Some cleanses require drinking only juice for several days, which will not provide you with enough protein, calories, or nutrients. Other detox products may contain laxatives, diuretics, or some supplements that may result in dehydration, diarrhea, electrolyte imbalance, or stomach problems. The National Center for Complementary and Integrative Health warns that some detox and cleansing programs may be unsafe, and FDA and FTC have already taken actions against the companies that sell products with hidden ingredients and fraudulent health claims. Unpasteurized juices that are commonly used for cleansing purposes may also carry some harmful bacteria (National Center for Complementary and Integrative Health, 2019).
+
+However, this does not mean that fruits, vegetables, or special beverages are harmful for people. Juice and smoothies may be rich with vitamins and minerals, but they should not be perceived as a magical solution for cleaning the body. Eating whole fruits and vegetables is preferred to juice since the former contain fiber that will help your digestion and provide a feeling of fullness. Maintaining a healthy lifestyle may support your body's natural detox system, but it means something else, unlike needing some specific cleanse.
+
+## Conclusion
+
+In summary, the belief that people need juice cleanses and special detox products for getting rid of toxins is mostly a myth. The liver and kidneys perform these functions naturally every day. There is no need for most detox products, and many of their claims have little scientific evidence supporting them. Some cleanses may even pose dangers to health, especially if they involve fasting, taking laxatives, or consuming some unregulated supplements. Therefore, it is better to use the natural capabilities of the body through nutrition, hydration, exercises, sleep, and abstaining from smoking and overconsumption of alcohol.`,
+        refs: [
+          `National Center for Complementary and Integrative Health. (2019, September). "Detoxes" and "Cleanses": What you need to know. NCCIH. https://www.nccih.nih.gov/health/detoxes-and-cleanses-what-you-need-to-know`,
+          `Salamon, M. (2023, November). Debunking common wellness myths — Harvard Health. Harvard Health. https://www.health.harvard.edu/healthy-aging-and-longevity/debunking-common-wellness-myths`,
+          `Zeratsky, K. (2023, August 23). What to know before you juice. Mayo Clinic. https://www.mayoclinic.org/healthy-lifestyle/nutrition-and-healthy-eating/expert-answers/juicing/faq-20058020`
+        ],
+        link: ""
+      },
+      {
+        cat: "Biomedical Engineering",
+        title: "The Future of Soft Robotics in Medicine: How Biomedical Engineering Is Transforming Surgery, Rehabilitation, and Drug Delivery",
+        author: "Sai Pulletikurthi",
+        date: "June 30, 2026",
+        abstract: "Flexible, bio-inspired robots that move like living tissue are reshaping minimally invasive surgery, rehabilitation, targeted drug delivery, and implantable devices.",
+        body: `Medicine has achieved tremendous progress over the last century. Nevertheless, there are numerous drawbacks in terms of medical procedures and operations. The problem is that the majority of surgical instruments are made of metals and hard plastic, making it impossible to perform any operation safely and smoothly in delicate organs. Rehabilitation devices might be uncomfortable for patients and thus reduce their willingness to undergo the process. Drug delivery technologies are usually unable to focus on a particular part of the human body, spreading all over the body instead. All these challenges have been tackled thanks to the collaboration of biomedical engineers and scientists who are able to merge engineering and biological principles together. One of the most interesting technologies in this context is soft robotics. Being completely different from classic rigid robots made of metals and hard polymers, soft robots are composed of more flexible materials similar to the mechanical properties of the human organism. Thus, this feature makes it possible for soft robots to interact with the human body while carrying out various tasks. Recent research suggests that soft robotics will significantly change the future of medicine and, therefore, make it much easier to deal with minimally invasive surgeries, rehabilitation, wearable medical devices, and drug delivery. (ACS Publications)
+
+Soft robotics is different from classic robotics in its main principles, features, and goals. Rigid robotics is perfect in manufacturing environments; however, such robots are not always appropriate to use inside the human body because of their rigid character. Human organs continuously move, stretch, shrink, etc., making it difficult to perform operations using traditional robotic technologies. Soft robotics, unlike traditional robotics, is able to bend, stretch and distribute the pressure on human tissues evenly and thus make it easier to navigate through different parts of the human body. In order to achieve these goals, biomedical engineers have developed soft robots by using bioinspired engineering technology. They have studied organisms like octopuses, worms, and jellyfish that are able to move and navigate in complicated places effectively. Using this information, they have created soft robots that can be used for surgical operations in the human body. (PMC)
+
+One of the most promising areas of application of soft robots is minimally invasive surgery. Nowadays, this type of surgery has become widely used due to its numerous advantages: minimally invasive procedures help to reduce recovery times, infection rates, minimize blood loss, etc. Nevertheless, such procedures have one major drawback – the instruments used for operations are too rigid. This is especially important when performing operations on the brain, heart, gastrointestinal tract, and lungs since these organs are very delicate, and even a minor mistake might cost people their lives. The advantage of soft robotics is the compliance of these systems, which allows to gently navigate through human tissues adapting to them. Engineers have developed flexible robotic manipulators that are capable of navigation through small passages, stability of movement, and high-precision performance of operations. Thus, these technologies may significantly increase the safety of procedures and make it possible to conduct many procedures via small incisions and natural holes of the human body. (ScienceDirect)
+
+Apart from that, soft robotics is currently changing rehabilitation medicine with the help of wearable robotic devices that help patients suffering from neurological injuries and musculoskeletal disorders. Every year, there are millions of patients around the world who experience reduced mobility due to stroke, spinal cord injuries, Parkinson's disease, and other conditions. Rehabilitation equipment used today is mostly based on the bulky mechanical braces that limit the ability to move. In order to solve this problem, biomedical engineers have developed soft robotic exosuits that can be worn by people. These suits are based on lightweight pneumatic actuators, textile structures, and artificial muscles that work with biomechanics of the human body. These devices detect patient's intentions using embedded sensors and help patients only if it is necessary. It makes patients more engaged in the process of rehabilitation. Thanks to these technologies, patients have been shown to improve the efficiency of walking, balance, endurance, and independence. (ACS Publications)
+
+Targeted drug delivery is another area of development that is rapidly growing thanks to soft robotics. The thing is that drugs distributed through classic ways circulate all over the bloodstream before reaching their destination point, which increases the risk of side effects on healthy tissue. This problem is especially critical in case of cancer chemotherapy when healthy tissues are affected together with tumors. Biomedical engineers have developed microscopic soft robots capable of delivering therapeutic agents to specific tissues. These devices might be driven either by magnetic fields or changes in temperature, pH, and other factors in the human body. Thus, soft robots will significantly increase the precision of treatment and reduce its risks. Another type of robots developed recently is biodegradable soft robots that are capable of dissolving inside the body after the therapeutic procedure is finished. Although this type of technology is still under development, it is an excellent solution towards personalized medicine. (Wiley Online Library)
+
+## Organ Simulation, Implantable Devices, and Future Clinical Applications
+
+Soft robotics is also changing medical education and preoperative planning with the help of creation of organ simulators. Traditionally, medical students and surgical residents are trained through the means of cadavers, animal models, and virtual reality simulators. Though these technologies are useful, they often fail to fully simulate the properties of the living tissues. In order to change the situation, biomedical engineers have developed organ simulators created from flexible polymers and artificial muscles that imitate the behavior of real-life organs like the heart, lungs, liver, and gastrointestinal tract. This allows doctors to practice and repeat operations on these simulators before performing them on people. With further development of technology, patient-specific simulators will be created using imaging data, which will allow surgeons to practice operations on the model of patients' anatomy before surgery. (ACS Publications)
+
+Apart from that, another promising area of research includes development of implantable soft robots that will be used for monitoring and assisting internal organs. Traditional implants, being rigid in nature, might irritate surrounding tissues. In order to avoid this problem, biomedical engineers have developed flexible cardiac assist devices that can increase the efficiency of heart's work without contacting blood, thus reducing the risks of forming clots. Apart from this, soft robotic devices can support muscles, regulate bladder function, and stimulate nerve cells that were damaged by spinal cord injuries. Due to these features, they are less likely to cause inflammation and irritation. Though many of these technologies are still under development and used only in clinical research, they are a great step to more effective medical implants. (ACS Publications)
+
+Despite numerous advantages, soft robotics still faces several challenges both technical and clinical. In fact, durability is a crucial problem that should be solved. Flexible polymers should resist millions of stretches, bends, and compressions without failing. Besides, power supply is another challenge, especially for miniature robots that do not have enough space for large batteries. Engineers are currently researching wireless energy transfer, biodegradable power sources, and energy harvesting technologies that would convert body movement into electrical energy. Control system is another issue: as soft robots are constantly deforming and not moving through rigid joints, precise prediction of movements might be impossible. Nevertheless, recent achievements in the sphere of artificial intelligence and machine learning will help engineers to solve this problem, allowing robots to adapt to the environment and react in real time. With further development of computational methods, soft robots will become more autonomous and efficient. (Wiley Online Library)
+
+Of course, ethical and regulatory issues will also play an important role in future development of medical robotics. Since many devices will gather patients' information and work autonomously inside the human body, protection of patient privacy and cyber security will be required. In addition, regulators will require laboratory and animal studies and human clinical trials to be conducted before approving new technologies. Moreover, policymakers and healthcare providers should pay attention to the problems of access and affordability to ensure that all patients receive the latest robotic treatments and not only those who have access to specialized hospitals. (Wiley Online Library)
+
+## Conclusion
+
+To summarize, soft robotics is one of the most promising intersections of medicine and engineering. Thanks to the use of flexible, biologically inspired materials, biomedical engineers have been able to create robots that can interact with the human body safely. Applications including minimally invasive surgery, wearable rehabilitation devices, targeted drug delivery, implantable medical technologies, and realistic surgical simulators prove the amazing potential of soft robotics. Though there are still challenges to overcome in durability, power, and control, the potential of soft robotics to make medicine safer, gentler, and more precise is immense.`,
+        refs: [
+          `Kailas Mahipal Malappuram, et al. Clinical Challenges in Soft Robotics. 9 June 2025, https://doi.org/10.1002/adrr.202400018`,
+          `Perera, Osura, et al. "A Review of Soft Robotic Actuators and Their Applications in Bioengineering, with an Emphasis on HASEL Actuators' Future Potential." Actuators, vol. 13, no. 12, 18 Dec. 2024, p. 524, https://doi.org/10.3390/act13120524`,
+          `Sharma, Bibhu, et al. "Soft Upper-Limb Wearable Robotic Devices: Technology and Applications." Advanced Intelligent Systems, 9 Sept. 2024, https://doi.org/10.1002/aisy.202400266`,
+          `Wang, Yuzhe, et al. "Pioneering Healthcare with Soft Robotic Devices: A Review." Smart Medicine, 23 Feb. 2024, https://doi.org/10.1002/smmd.20230045`,
+          `Yin, Shukun, et al. "Wearable and Implantable Soft Robots." Chemical Reviews, 11 Oct. 2024, https://doi.org/10.1021/acs.chemrev.4c00513`
+        ],
+        link: ""
+      },
+    ];
+
+    // minutes-to-read, estimated from body length (~200 wpm)
+    const mins = t => Math.max(1, Math.round(t.trim().split(/\s+/).length / 200));
+    // turn bare URLs in reference strings into links
+    const linkify = s => s.replace(/(https?:\/\/[^\s]+?)(\.?)(?=\s|$)/g,
+      (m, u, dot) => `<a href="${u}" target="_blank" rel="noopener">${u}</a>${dot}`);
+
+    const grid = document.getElementById('grid');
+    const chipsEl = document.getElementById('chips');
+    const searchEl = document.getElementById('search');
+    const emptyEl = document.getElementById('empty');
+    let activeCat = 'All';
+    let query = '';
+
+    const cats = ['All', ...Array.from(new Set(ESSAYS.map(e => e.cat)))];
+    cats.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (i === 0 ? ' active' : '');
+      b.textContent = c;
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', () => {
+        activeCat = c;
+        document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        render();
+      });
+      chipsEl.appendChild(b);
+    });
+
+    const initials = name => name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+    const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const EASE = 'cubic-bezier(0.22, 0.75, 0.28, 1)';
+    const supportsIO = 'IntersectionObserver' in window;
+
+    // Scroll-reveal: essay cards rise + unblur in a stagger as they enter the viewport.
+    const cardIO = supportsIO ? new IntersectionObserver((ents) => {
+      ents.forEach(en => { if (en.isIntersecting) { en.target.classList.add('reveal'); cardIO.unobserve(en.target); } });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }) : null;
+
+    // Scroll-reveal: section header + controls fade up once.
+    const revealIO = supportsIO ? new IntersectionObserver((ents) => {
+      ents.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); revealIO.unobserve(en.target); } });
+    }, { threshold: 0.2 }) : null;
+    document.querySelectorAll('.will-reveal').forEach(el => {
+      if (RM || !revealIO) el.classList.add('in'); else revealIO.observe(el);
+    });
+
+    function render() {
+      const q = query.trim().toLowerCase();
+      const list = ESSAYS.filter(e => {
+        const catOk = activeCat === 'All' || e.cat === activeCat;
+        const qOk = !q || (e.title + ' ' + e.abstract + ' ' + e.author + ' ' + e.cat + ' ' + e.body).toLowerCase().includes(q);
+        return catOk && qOk;
+      });
+
+      grid.innerHTML = '';
+      emptyEl.style.display = list.length ? 'none' : 'block';
+
+      list.forEach((e, i) => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.innerHTML = `
+          <div class="card__top">
+            <span class="card__cat">${e.cat}</span>
+            <span class="card__min">${e.date} · ${mins(e.body)} min read</span>
+          </div>
+          <h3 class="card__title">${e.title}</h3>
+          <p class="card__abstract">${e.abstract}</p>
+          <div class="card__foot">
+            <span class="card__author"><span class="card__avatar">${initials(e.author)}</span>${e.author}</span>
+            <span class="card__read">Read <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>`;
+        const open = () => openModal(e, card);
+        card.addEventListener('click', open);
+        card.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); } });
+        card.addEventListener('animationend', () => { card.classList.add('shown'); card.classList.remove('reveal'); });
+        grid.appendChild(card);
+        if (RM || !cardIO) { card.classList.add('shown'); }
+        else { card.style.animationDelay = (i * 0.12) + 's'; cardIO.observe(card); }
+      });
+    }
+
+    /* ---------- Modal reader ---------- */
+    const modal = document.getElementById('modal');
+    const panel = modal.querySelector('.modal__panel');
+    const scrim = modal.querySelector('.modal__scrim');
+    let lastFocus = null, originEl = null;
+
+    const closeBtn = modal.querySelector('.modal__close');
+    // Transform that maps the fullscreen panel onto the origin card's box.
+    function deltaToCard(el) {
+      const c = el.getBoundingClientRect(), p = panel.getBoundingClientRect();
+      const s = Math.max(0.05, c.width / p.width);
+      return { dx: (c.left + c.width / 2) - (p.left + p.width / 2),
+               dy: (c.top + c.height / 2) - (p.top + p.height / 2), s };
+    }
+
+    function openModal(e, from) {
+      lastFocus = document.activeElement;
+      originEl = from || null;
+      modal.classList.remove('reveal');   // text starts hidden
+      document.getElementById('m-cat').textContent = e.cat;
+      document.getElementById('m-title').textContent = e.title;
+      document.getElementById('m-meta').innerHTML =
+        `<span>By <strong>${e.author}</strong></span><span>${e.date}</span><span>${mins(e.body)} min read</span><span>The Medical Minute</span>`;
+      document.getElementById('m-body').innerHTML = e.body.split('\n\n').map(p =>
+        p.startsWith('## ') ? `<h4 class="essay-h">${p.slice(3)}</h4>` : `<p>${p}</p>`).join('');
+      const refs = document.getElementById('m-refs');
+      if (e.refs && e.refs.length) {
+        refs.innerHTML = '<h4 class="essay-h">References</h4><ol class="reflist">' +
+          e.refs.map(r => `<li>${linkify(r)}</li>`).join('') + '</ol>';
+        refs.style.display = 'block';
+      } else { refs.style.display = 'none'; }
+      const link = document.getElementById('m-link');
+      if (e.link) { link.href = e.link; link.style.display = 'inline-flex'; }
+      else { link.style.display = 'none'; }
+
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      panel.scrollTop = 0;
+
+      if (!RM && originEl && panel.animate) {
+        panel.getAnimations().forEach(a => a.cancel());
+        const { dx, dy, s } = deltaToCard(originEl);
+        // 1) flip out at card size  →  2) expand to fill the whole screen
+        const grow = panel.animate([
+          { transform: `translate(${dx}px, ${dy}px) scale(${s}) rotateY(90deg)`, opacity: 0, offset: 0 },
+          { transform: `translate(${dx}px, ${dy}px) scale(${s}) rotateY(0deg)`,  opacity: 1, offset: 0.34 },
+          { transform: 'translate(0px, 0px) scale(1) rotateY(0deg)', opacity: 1, offset: 1 }
+        ], { duration: 780, easing: EASE });
+        // 3) once expanded, let the text fade down + settle in (driven by CSS .reveal)
+        grow.onfinish = () => modal.classList.add('reveal');
+      } else {
+        modal.classList.add('reveal');
+      }
+      closeBtn.focus();
+    }
+
+    function closeModal() {
+      const done = () => {
+        modal.classList.remove('open', 'reveal');
+        scrim.style.opacity = '';
+        document.body.style.overflow = '';
+        if (lastFocus) lastFocus.focus();
+      };
+      if (!RM && originEl && panel.animate) {
+        modal.classList.remove('reveal');   // reverse: text lifts + fades out first
+        panel.getAnimations().forEach(a => a.cancel());   // reset panel to fullscreen to measure cleanly
+        const { dx, dy, s } = deltaToCard(originEl);
+        scrim.style.opacity = '0';
+        // ...then the whole panel shrinks straight back down onto the origin card,
+        // staying visible the whole way so you see it return home, and fades only once it lands.
+        panel.animate([
+          { transform: 'translate(0px, 0px) scale(1)', opacity: 1, offset: 0 },
+          { transform: `translate(${dx}px, ${dy}px) scale(${s})`, opacity: 1, offset: 0.8 },
+          { transform: `translate(${dx}px, ${dy}px) scale(${s})`, opacity: 0, offset: 1 }
+        ], { duration: 560, delay: 140, easing: 'cubic-bezier(0.5, 0, 0.2, 1)' }).onfinish = done;
+      } else { done(); }
+    }
+    modal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+
+    searchEl.addEventListener('input', e => { query = e.target.value; render(); });
+
+    /* ---------- Welcome gate ----------
+       The page can't be scrolled while <html class="gated"> is set. Clicking
+       "Browse the Catalog" plays a transition, unlocks scrolling, and glides
+       down into the catalog (whose header + cards then reveal on the way in). */
+    /* ---------- Heart transition + two-view navigation ----------
+       Homepage = the gated welcome. "Browse the Catalog" dives through the heart
+       into the catalog; the catalog's Back button dives back to the welcome.
+       Cross-page links (Who We Are) dive, then navigate — the destination fades in
+       from white on arrival. */
+    const hero = document.querySelector('.hero');
+    const rootEl = document.documentElement;
+    const portal = document.getElementById('portal');
+    const portalHeart = portal.querySelector('.portal__heart');
+    let busy = false, timers = [];
+
+    function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+    function later(fn, ms) { const t = setTimeout(fn, ms); timers.push(t); return t; }
+    function resetPortal() {
+      clearTimers();
+      portal.getAnimations().forEach(a => a.cancel());
+      portalHeart.getAnimations().forEach(a => a.cancel());
+      portal.classList.remove('run');
+      portal.style.opacity = '';
+      portal.style.pointerEvents = '';
+      portalHeart.style.transform = '';
+    }
+    // keep the welcome pinned while gated (blocks any stray scroll)
+    window.addEventListener('scroll', () => {
+      if (rootEl.classList.contains('gated')) window.scrollTo(0, 0);
+    }, { passive: true });
+
+    function showCatalog() {
+      hero.style.display = 'none';
+      rootEl.classList.remove('gated'); rootEl.classList.add('catalog-view');
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+    function showWelcome() {
+      hero.style.display = '';
+      rootEl.classList.add('gated'); rootEl.classList.remove('catalog-view');
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+    // start a clean dive: cancel anything stale, then run the cover-in animation
+    function beginDive() {
+      portal.getAnimations().forEach(a => a.cancel());
+      portalHeart.getAnimations().forEach(a => a.cancel());
+      portal.classList.add('run');
+      portal.style.pointerEvents = 'auto';
+      portal.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, easing: 'ease-out', fill: 'forwards' });
+      portalHeart.animate([{ transform: 'scale(1)' }, { transform: 'scale(46)' }],
+        { duration: 720, delay: 180, easing: 'cubic-bezier(0.55, 0, 0.9, 0.25)', fill: 'forwards' });
+    }
+    // same-page: dive → swap under the white → reveal. `busy` stays locked the WHOLE time.
+    function diveTo(apply) {
+      if (busy) return; busy = true;
+      if (RM) { apply(); busy = false; return; }
+      beginDive();
+      later(() => {
+        apply();
+        later(() => {
+          portal.style.pointerEvents = 'none';
+          const finish = () => { resetPortal(); busy = false; };
+          portal.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 460, easing: 'ease-in', fill: 'forwards' }).onfinish = finish;
+          later(finish, 700);   // fallback if onfinish is throttled
+        }, 60);
+      }, 820);
+    }
+    // cross-page: dive, then navigate. `busy` stays locked until the page unloads.
+    function diveToURL(url) {
+      if (busy) return; busy = true;
+      if (RM) { window.location.href = url; return; }
+      sessionStorage.setItem('mm_heart', '1');
+      beginDive();
+      later(() => { window.location.href = url; }, 820);
+    }
+
+    const CUR = (location.pathname.split('/').pop() || 'index.html');
+    document.querySelector('.hero__cta[href="#catalog"]').addEventListener('click', e => { e.preventDefault(); diveTo(showCatalog); });
+    document.querySelector('.back-home').addEventListener('click', e => { e.preventDefault(); diveTo(showWelcome); });
+    document.querySelectorAll('a[data-heart]').forEach(a => a.addEventListener('click', e => {
+      e.preventDefault();
+      const url = a.getAttribute('href');
+      if (url && url.split('/').pop() !== CUR) diveToURL(url);
+    }));
+
+    // arrival: page starts under a white cover — fade it away (buttons are inert until it clears)
+    if (rootEl.classList.contains('arriving')) {
+      busy = true;
+      portal.classList.add('run');
+      portal.style.pointerEvents = 'none';
+      requestAnimationFrame(() => {
+        const done = () => { rootEl.classList.remove('arriving'); resetPortal(); busy = false; };
+        portal.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 520, easing: 'ease-in', fill: 'forwards' }).onfinish = done;
+        later(done, 1100);
+      });
+    }
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+    render();
+  </script>
+</body>
+</html>

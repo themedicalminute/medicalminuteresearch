@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-label="The Medical Minute — heart with medical cross">
+  <!-- cream field -->
+  <rect width="1000" height="1000" fill="#f3eede"/>
+
+  <!-- navy heart -->
+  <path d="M500 858
+           C 500 858 132 628 132 388
+           C 132 262 226 190 322 190
+           C 408 190 466 246 500 306
+           C 534 246 592 190 678 190
+           C 774 190 868 262 868 388
+           C 868 628 500 858 500 858 Z"
+        fill="#163a66"/>
+
+  <!-- white medical cross -->
+  <g fill="#fbfbf6">
+    <rect x="442" y="368" width="116" height="316" rx="6"/>
+    <rect x="363" y="447" width="274" height="116" rx="6"/>
+  </g>
+
+  <!-- stethoscope + ECG + wordmark (bottom-left, as in the logo) -->
+  <g stroke="#163a66" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- earpieces -->
+    <circle cx="70" cy="852" r="9" fill="#163a66" stroke="none"/>
+    <circle cx="110" cy="852" r="9" fill="#163a66" stroke="none"/>
+    <!-- tubing down to the bell -->
+    <path d="M70 861 C 70 905 60 940 96 958 C 118 969 118 969 118 969"/>
+    <path d="M110 861 C 110 905 120 940 96 958"/>
+    <!-- ECG trace leading to the chest-piece -->
+    <path d="M96 969 L 150 969 L 168 969 L 182 928 L 198 1004 L 214 969 L 236 969 L 246 950 L 256 988 L 266 969 L 300 969"/>
+    <!-- chest-piece -->
+    <circle cx="316" cy="969" r="14" fill="#66b3bd" stroke="#163a66" stroke-width="6"/>
+  </g>
+  <text x="300" y="1002" font-family="Georgia, 'Times New Roman', serif" font-size="26" letter-spacing="2" fill="#163a66">The Medical Minute</text>
+</svg>
