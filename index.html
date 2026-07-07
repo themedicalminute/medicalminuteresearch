@@ -38,16 +38,17 @@
     color: var(--ink);
     background: var(--cream);
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   ::selection { background: rgba(77,154,166,0.25); }
   a { color: inherit; }
   img { max-width: 100%; display: block; }
   :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 6px; }
 
-  /* Welcome gate — scrolling stays locked on the hero until "Browse the Catalog" is clicked.
-     Lock on <html> only, so the body never becomes its own scroll container. */
-  html.gated { overflow: hidden; }
+  /* Welcome gate — instead of locking scroll (which trapped the buttons off-screen on short
+     screens), we simply HIDE the catalog until "Browse the Catalog" is clicked. The welcome is
+     then a normal page: it fits most screens, and on very short ones it just scrolls to the buttons. */
+  html.gated #catalog, html.gated .footer { display: none; }
 
   /* Transition portal — the heart zooms up and you pass through the white cross into the catalog */
   .portal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; overflow: hidden;
@@ -324,6 +325,19 @@
     .card__abstract { -webkit-line-clamp: 4; }
     .addbtn { align-self: flex-start; }
   }
+  /* Short screens (small laptops, OS scaling, mobile landscape): compress the welcome so it fits */
+  @media (max-height: 760px) {
+    .hero { padding-top: 74px; padding-bottom: 44px; }
+    .emblem { width: clamp(46px, 7vh, 66px); margin-bottom: clamp(8px, 1.4vh, 16px); }
+    .hero__lede { margin-top: clamp(10px, 1.8vh, 18px); }
+    .rule { margin-top: clamp(10px, 1.6vh, 18px); margin-bottom: clamp(8px, 1.4vh, 14px); }
+  }
+  @media (max-height: 620px) {
+    .hero__lede { display: none; }
+    .hero__eyebrow { margin-bottom: 8px; }
+    .hero__title { font-size: clamp(2.2rem, 8vw, 4rem); }
+    .hero__card { padding-top: clamp(20px, 4vh, 40px); padding-bottom: clamp(20px, 4vh, 40px); }
+  }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
     html { scroll-behavior: auto; }
@@ -343,7 +357,7 @@
 </head>
 <body>
   <!-- If JS is disabled, don't trap the visitor on the hero -->
-  <noscript><style>html.gated { overflow: auto !important; }</style></noscript>
+  <noscript><style>html.gated #catalog, html.gated .footer { display: revert !important; }</style></noscript>
 
   <!-- Transition portal — dive through the heart into the catalog -->
   <div class="portal" id="portal" aria-hidden="true">
@@ -721,10 +735,6 @@ To summarize, soft robotics is one of the most promising intersections of medici
       portal.style.pointerEvents = '';
       portalHeart.style.transform = '';
     }
-    // keep the welcome pinned while gated (blocks any stray scroll)
-    window.addEventListener('scroll', () => {
-      if (rootEl.classList.contains('gated')) window.scrollTo(0, 0);
-    }, { passive: true });
 
     function showCatalog() {
       hero.style.display = 'none';
